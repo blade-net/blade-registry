@@ -4,8 +4,8 @@ pragma solidity ^0.8.4;
 /*
  * Public Key Registry Contract
  * @author Sebastian Göndör
- * @version 0.1.0
- * @date 27.05.2021
+ * @version 0.1.1
+ * @date 28.05.2021
  */
 
 /**
@@ -16,6 +16,9 @@ contract KeyRegistry
 {
     mapping (address => bytes32) private keys;
     
+    /**
+     * Retrieve the key for an address
+     */
     function getKey(address a) public view returns (bytes32)
     {
         if(keys[a] == 0x0)
@@ -24,6 +27,9 @@ contract KeyRegistry
         return keys[a];
     }
     
+    /**
+     * Register a string-formatted key. The address derived from the provided key must match the sender's address.
+     */
     function setKey(string memory key) public returns (address)
     {
         bytes32 byteKey;
@@ -39,6 +45,9 @@ contract KeyRegistry
         return setKey(byteKey);
     }
     
+    /**
+     * Register a key. The address derived from the provided key must match the sender's address.
+     */
     function setKey(bytes32 key) public returns (address)
     {
         if(key.length == 0)
@@ -55,5 +64,15 @@ contract KeyRegistry
         keys[a] = key;
         
         return a;
+    }
+    
+    /**
+     * Checks if a key for a specified address is registered.
+     */
+    function isRegistered(address a) public view returns (bool)
+    {
+        if(keys[a] == 0x0)
+            return false;
+        return true;
     }
 }
