@@ -4,6 +4,14 @@ The Blade Registry is a directory service implemented as a smart contract in Eth
 
 ## Usage
 
+## Deployment
+
+List of deployed versions
+
+### 0.2.0
+
+* Ropsten: 0x8708975b585762a09aa568736a5298d6845772b7
+
 ## Compilation
 
 * Compile
