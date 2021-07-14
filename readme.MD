@@ -16,7 +16,7 @@ List of deployed versions
 
 * Compile
 
-```solc ./solidity/BladeRegistry.sol --bin --abi --optimize -o ../bin```
+```solc ./solidity/BladeRegistry.sol --bin --abi --optimize -o ./bin```
 
 * Create Java classes with/for web3j
 
