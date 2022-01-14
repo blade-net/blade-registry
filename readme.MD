@@ -8,6 +8,10 @@ The Blade Registry is a directory service implemented as a smart contract in Eth
 
 List of deployed versions
 
+### 0.2.1
+
+* Ropsten: 0xe6059fB31A5Ff5b9a507daD4878a3912b327dF22
+
 ### 0.2.0
 
 * Ropsten: 0x8708975b585762a09aa568736a5298d6845772b7
@@ -24,5 +28,9 @@ List of deployed versions
 
 ## Changelog
 
+### 0.2.1
+* Reworked events
+* Refactored getAppOwner()
+* Changed Solidity version requirement to ^0.8.11
 ### 0.2.0
 * Initial release
