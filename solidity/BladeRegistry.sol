@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.6;
+pragma solidity ^0.8.11;
 
 /*
  * Blade Registry Contract
  * @author Sebastian Göndör
- * @version 0.2.0
- * @date 29.06.2021
+ * @version 0.2.1
+ * @date 14.01.2022
  */
- 
-// 0.2.0: ropsten 0x8708975b585762a09aa568736a5298d6845772b7
+
+// 0.2.1: ropsten 0xe6059fB31A5Ff5b9a507daD4878a3912b327dF22
+// 0.2.0: ropsten 0x8708975b585762a09aa568736a5298d6845772b7 
 
 contract BladeRegistry
 {
@@ -25,17 +26,17 @@ contract BladeRegistry
     mapping (address => address)    private idDelegates; // (id => delegate)
     mapping (address => address)    private idDelegatesRevoked; //(revoked => id)
     
-    event IdentityCreatedEvent(address id);
-    event IdNameRegisteredEvent(address id, string name);
-    event IdDelegateRegisteredEvent(address id, address delegate);
-    event IdDelegateRevokedEvent(address id, address delegate);
-    event IdURLSetEvent(address id, string url);
+    event IdentityCreatedEvent(address indexed id);
+    event IdNameRegisteredEvent(address indexed id, string name);
+    event IdDelegateRegisteredEvent(address indexed id, address delegate);
+    event IdDelegateRevokedEvent(address indexed id, address delegate);
+    event IdURLSetEvent(address indexed id, string url);
     
     /**
      * Creates a new identity by registering a unique name and setting a delegate and url. Reverts if an identity for the sender's address
      * already exists or if the name is aready registered.
-     *
-     * While names can never be changed, delegates and URLs can be changed. Delegates can change an identity's URL, but only the identity
+     * 
+     * While names can never be changed, delegates and URLs can be changed. Delegates can change an identity's URL, but only the identity 
      * itself can change a delegate.
      */
     function createIdentity(string calldata name, string calldata url, address idDelegate) public returns (bool)
@@ -197,7 +198,7 @@ contract BladeRegistry
     ////////////////////////////////////////////////////////////////
     
     mapping (address => address) private orgOwners; // (orgID => ownerID)
-   // mapping (address => address) private orgMembers; // (memberID => orgID)
+    // mapping (address => address) private orgMembers; // (memberID => orgID)
     
     mapping (address => mapping (address => address)) private orgMembers; // (orgID => (identity => identity))
     
@@ -205,12 +206,12 @@ contract BladeRegistry
     mapping (bytes32 => address) private orgNames; // (hash(name) => orgID)
     mapping (address => string) private orgNameMapping; // (orgID => name)
     
-    event OrgCreatedEvent(address creator, address orgID);
-    event OrgNameRegisteredEvent(address orgID, string name);
-    event OrgURLSetEvent(address orgID, string url);
-    event OrgMemberRemovedEvent(address orgID, address memberID);
-    event OrgMemberAddedEvent(address orgID, address memberID);
-    event OrgOwnerChangedEvent(address orgID, address oldOwner, address newOwner);
+    event OrgCreatedEvent(address indexed creator, address orgID);
+    event OrgNameRegisteredEvent(address indexed orgID, string name);
+    event OrgURLSetEvent(address indexed orgID, string url);
+    event OrgMemberRemovedEvent(address indexed orgID, address memberID);
+    event OrgMemberAddedEvent(address indexed orgID, address memberID);
+    event OrgOwnerChangedEvent(address indexed orgID, address oldOwner, address newOwner);
     
     function createOrganization(address orgID, string calldata name, string calldata url) public returns (bool)
     {
@@ -358,14 +359,10 @@ contract BladeRegistry
     
     enum AppType {APP, API}
     
-    event AppRegistered
-    (
-        address indexed appID,
-        address appVersionID,
-        AppType appType,
-        string appName,
-        address owner
-    );
+    event AppRegisteredEvent(address indexed id);
+    event AppNameRegisteredEvent(address indexed id, string name);
+    event AppVersionURLSetEvent(address indexed id, string url);
+    event AppVersionRegisteredEvent(address indexed appID, address appVersionID);
     
     /**
      * Creates a new app with a given appID and name and url
@@ -381,14 +378,17 @@ contract BladeRegistry
             revert("App name already registered");
         
         appOwners[appID] = msg.sender;
-        
-        // TODO emit event with app details
-        
+
         appTypes[appID] = appType;
-        appVersions[appID].push(appID);
+        appVersions[appID].push(appID); // first AppVersionID equals AppID
         appVersionMapping[appID] = appID;
         appNames[name] = appID;
         appVersionURL[appID] = url;
+        
+        emit AppRegisteredEvent(appID);
+        emit AppVersionRegisteredEvent(appID, appID);
+        emit AppNameRegisteredEvent(appID, name);
+        emit AppVersionURLSetEvent(appID, url);
         
         appDependencies[appID] = dependencies;
         
@@ -406,15 +406,19 @@ contract BladeRegistry
         if(appVersionMapping[appVersionID] != address(0))
             revert("An app version with the given app version ID already exists");
         
-        // TODO emit event
-        
         appVersions[appID].push(appVersionID);
         appVersionMapping[appVersionID] = appID;
         appVersionURL[appID] = url;
         
+        emit AppVersionRegisteredEvent(appID, appVersionID);
+        emit AppVersionURLSetEvent(appVersionID, url);
+
         return true;
     }
     
+    /**
+     * sets the version URL for an app
+     */
     function setVersionURL(address appVersionID, string calldata url) public returns (bool)
     {
         if(appVersionMapping[appVersionID] == address(0))
@@ -448,7 +452,7 @@ contract BladeRegistry
     }
     
     /**
-     *
+     * returns the app for a given version ID
      */
     function getAppForVersion(address appVersionID) public view returns (address)
     {
@@ -494,7 +498,7 @@ contract BladeRegistry
     /**
      * returns address of app owner by app name. returns 0x0 if app not found
      */
-    function getAppOwner(string calldata name) public view returns (address)
+    function getAppOwnerByName(string calldata name) public view returns (address)
     {
         address app = getAppID(name);
         
