@@ -4,12 +4,13 @@ pragma solidity ^0.8.11;
 /*
  * Blade Registry Contract
  * @author Sebastian Göndör
- * @version 0.2.1
- * @date 14.01.2022
+ * @version 0.2.1a
+ * @date 20.01.2022
  */
 
+// 0.2.1a: event fix for app registrations, fixed functions registerAppName() and createApp()
 // 0.2.1: ropsten 0xe6059fB31A5Ff5b9a507daD4878a3912b327dF22
-// 0.2.0: ropsten 0x8708975b585762a09aa568736a5298d6845772b7 
+// 0.2.0: ropsten 0x8708975b585762a09aa568736a5298d6845772b7
 
 contract BladeRegistry
 {
@@ -35,8 +36,8 @@ contract BladeRegistry
     /**
      * Creates a new identity by registering a unique name and setting a delegate and url. Reverts if an identity for the sender's address
      * already exists or if the name is aready registered.
-     * 
-     * While names can never be changed, delegates and URLs can be changed. Delegates can change an identity's URL, but only the identity 
+     *
+     * While names can never be changed, delegates and URLs can be changed. Delegates can change an identity's URL, but only the identity
      * itself can change a delegate.
      */
     function createIdentity(string calldata name, string calldata url, address idDelegate) public returns (bool)
@@ -359,9 +360,10 @@ contract BladeRegistry
     
     enum AppType {APP, API}
     
-    event AppRegisteredEvent(address indexed id);
-    event AppNameRegisteredEvent(address indexed id, string name);
-    event AppVersionURLSetEvent(address indexed id, string url);
+    event AppRegisteredEvent(address indexed appID);
+    event AppNameRegisteredEvent(address indexed appID, string appName);
+    event AppVersionURLSetEvent(address indexed appID, string appURL);
+    event AppSetOwnerEvent(address indexed appID, address appOwnerID);
     event AppVersionRegisteredEvent(address indexed appID, address appVersionID);
     
     /**
@@ -371,10 +373,10 @@ contract BladeRegistry
      */
     function createApp(address appID, string calldata name, string calldata url, AppType appType, address[] calldata dependencies) public returns (bool)
     {
-        if(appOwners[appID] == address(0))
+        if(appOwners[appID] != address(0))
             revert("App address already registered");
             
-        if(appNames[name] == address(0))
+        if(appNames[name] != address(0))
             revert("App name already registered");
         
         appOwners[appID] = msg.sender;
@@ -387,6 +389,7 @@ contract BladeRegistry
         
         emit AppRegisteredEvent(appID);
         emit AppVersionRegisteredEvent(appID, appID);
+        emit AppSetOwnerEvent(appID, msg.sender);
         emit AppNameRegisteredEvent(appID, name);
         emit AppVersionURLSetEvent(appID, url);
         
@@ -410,6 +413,7 @@ contract BladeRegistry
         appVersionMapping[appVersionID] = appID;
         appVersionURL[appID] = url;
         
+        emit AppSetOwnerEvent(appID, msg.sender);
         emit AppVersionRegisteredEvent(appID, appVersionID);
         emit AppVersionURLSetEvent(appVersionID, url);
 
@@ -430,6 +434,8 @@ contract BladeRegistry
             revert("Only the app owner is allowed to change version URLs");
         
         appVersionURL[appVersionID] = url;
+
+        emit AppVersionURLSetEvent(appVersionID, url);
         
         return true;
     }
@@ -437,7 +443,7 @@ contract BladeRegistry
     /**
      * register a name if possible and link it to the address sending the transaction
      */
-    function registerName(string calldata name) public returns (bool)
+    function registerName(address appID, string calldata name) public returns (bool)
     {
         // add name => identity/address to mapping
         if(appNames[name] != address(0)) // if the name is already registered
@@ -446,8 +452,10 @@ contract BladeRegistry
             return false;
         }
         
+        emit AppNameRegisteredEvent(appID, name);
+
         // name not yet registered -> register name and return true
-        appNames[name] = msg.sender;
+        appNames[name] = appID;
         return true;
     }
     
@@ -477,6 +485,8 @@ contract BladeRegistry
             appOwners[appID] = newOwner;
             return true;
         }
+
+        emit AppSetOwnerEvent(appID, newOwner);
         
         // name not yet registered or owned by other identity -> return false
         return false;
