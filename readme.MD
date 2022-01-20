@@ -28,6 +28,10 @@ List of deployed versions
 
 ## Changelog
 
+### 0.2.x
+* Added missing events for App registrations
+* Fixed function createApp()
+* Fixed function appSetOwner()
 ### 0.2.1
 * Reworked events
 * Refactored getAppOwner()
